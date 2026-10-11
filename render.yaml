@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: web-crawler
+    runtime: java
+    plan: free
+    buildCommand: mvn clean package
+    startCommand: java -jar target/web-crawler-1.0.0-jar-with-dependencies.jar
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: DB_PATH
+        value: data/crawler.db

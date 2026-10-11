@@ -1,5 +1,9 @@
 package db;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -24,8 +28,26 @@ import java.sql.Statement;
  */
 public class DatabaseManager implements AutoCloseable {
 
-    private static final String DB_URL = "jdbc:sqlite:crawler.db";
+    private static final String DB_URL = resolveDatabaseUrl();
     private final Connection connection;
+
+    private static String resolveDatabaseUrl() {
+        String configured = System.getenv("DB_PATH");
+        Path databasePath = (configured != null && !configured.trim().isEmpty())
+                ? Paths.get(configured)
+                : Paths.get("data", "crawler.db");
+
+        Path parent = databasePath.getParent();
+        if (parent != null) {
+            try {
+                Files.createDirectories(parent);
+            } catch (IOException e) {
+                throw new IllegalStateException("Unable to create SQLite directory: " + parent, e);
+            }
+        }
+
+        return "jdbc:sqlite:" + databasePath.toAbsolutePath();
+    }
 
     public DatabaseManager() throws SQLException {
         this.connection = DriverManager.getConnection(DB_URL);

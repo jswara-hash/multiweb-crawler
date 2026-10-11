@@ -50,10 +50,41 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class CrawlServer {
 
-    private static final int PORT = 8080;
-    private static final String DB_URL = "jdbc:sqlite:crawler.db";
+    private static final int PORT = resolvePort();
+    private static final String DB_URL = resolveDatabaseUrl();
     private static final String LANDING_PAGE_PATH = "index.html";
     private static final String DASHBOARD_PAGE_PATH = "report/live-report.html";
+
+    private static int resolvePort() {
+        String configured = System.getenv("PORT");
+        if (configured != null && !configured.trim().isEmpty()) {
+            try {
+                return Integer.parseInt(configured.trim());
+            } catch (NumberFormatException ignored) {
+                // Fall back to the local default when Render or another platform
+                // provides an unexpected port format.
+            }
+        }
+        return 8080;
+    }
+
+    private static String resolveDatabaseUrl() {
+        String configured = System.getenv("DB_PATH");
+        Path databasePath = (configured != null && !configured.trim().isEmpty())
+                ? Paths.get(configured)
+                : Paths.get("data", "crawler.db");
+
+        Path parent = databasePath.getParent();
+        if (parent != null) {
+            try {
+                Files.createDirectories(parent);
+            } catch (IOException e) {
+                throw new IllegalStateException("Unable to create SQLite directory: " + parent, e);
+            }
+        }
+
+        return "jdbc:sqlite:" + databasePath.toAbsolutePath();
+    }
 
     private static final AtomicBoolean crawlInProgress = new AtomicBoolean(false);
 
@@ -65,6 +96,9 @@ public class CrawlServer {
     private static volatile String lastSeedUrl = "";
 
     public static void main(String[] args) throws IOException {
+        Files.createDirectories(Paths.get("report"));
+        Files.createDirectories(Paths.get("data"));
+
         HttpServer server = HttpServer.create(new InetSocketAddress(PORT), 0);
 
         server.createContext("/", CrawlServer::handlePage);
