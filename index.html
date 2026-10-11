@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Discover How the Web Connects</title>
+        <style>
+                :root {
+                        --bg: #0d1117;
+                        --bg-soft: #121b27;
+                        --panel: rgba(19, 26, 36, 0.9);
+                        --panel-strong: #151f2c;
+                        --line: rgba(110, 130, 160, 0.25);
+                        --text: #e7edf7;
+                        --muted: #a8b3c7;
+                        --accent: #4fd1c5;
+                        --accent-strong: #2fb8b2;
+                        --accent-soft: rgba(79, 209, 197, 0.16);
+                        --accent-2: #f2a65a;
+                        --shadow: rgba(17, 23, 33, 0.5);
+                }
+
+                * {
+                        box-sizing: border-box;
+                }
+
+                html {
+                        scroll-behavior: smooth;
+                }
+
+                body {
+                        margin: 0;
+                        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+                        background:
+                                radial-gradient(circle at top left, rgba(79, 209, 197, 0.12), transparent 30%),
+                                radial-gradient(circle at bottom right, rgba(242, 166, 90, 0.10), transparent 25%),
+                                var(--bg);
+                        color: var(--text);
+                        line-height: 1.6;
+                }
+
+                a {
+                        color: inherit;
+                        text-decoration: none;
+                }
+
+                .container {
+                        width: min(1180px, calc(100% - 32px));
+                        margin: 0 auto;
+                }
+
+                .topbar {
+                        position: sticky;
+                        top: 0;
+                        z-index: 10;
+                        backdrop-filter: blur(12px);
+                        background: rgba(13, 17, 23, 0.78);
+                        border-bottom: 1px solid var(--line);
+                }
+
+                .nav {
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-between;
+                        min-height: 76px;
+                        gap: 18px;
+                }
+
+                .brand {
+                        display: flex;
+                        align-items: center;
+                        gap: 12px;
+                        font-weight: 700;
+                        letter-spacing: 0.02em;
+                }
+
+                .brand-mark {
+                        width: 34px;
+                        height: 34px;
+                        border-radius: 10px;
+                        display: grid;
+                        place-items: center;
+                        background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+                        color: #062b2c;
+                        font-size: 18px;
+                        box-shadow: 0 8px 24px rgba(79, 209, 197, 0.35);
+                }
+
+                .nav-links {
+                        display: flex;
+                        align-items: center;
+                        gap: 24px;
+                        color: var(--muted);
+                        font-size: 0.95rem;
+                }
+
+                .nav-links a:hover {
+                        color: var(--text);
+                }
+
+                .nav-actions {
+                        display: flex;
+                        align-items: center;
+                        gap: 12px;
+                }
+
+                .btn {
+                        display: inline-flex;
+                        align-items: center;
+                        justify-content: center;
+                        gap: 8px;
+                        border-radius: 12px;
+                        padding: 0.9rem 1.4rem;
+                        font-weight: 700;
+                        transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+                        border: 1px solid transparent;
+                        cursor: pointer;
+                }
+
+                .btn:hover {
+                        transform: translateY(-1px);
+                }
+
+                .btn-primary {
+                        background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+                        color: #082420;
+                        box-shadow: 0 8px 20px rgba(79, 209, 197, 0.25);
+                }
+
+                .btn-secondary {
+                        background: rgba(255, 255, 255, 0.02);
+                        border-color: var(--line);
+                        color: var(--text);
+                }
+
+                section {
+                        padding: 80px 0;
+                }
+
+                .hero {
+                        padding-top: 52px;
+                        padding-bottom: 70px;
+                }
+
+                .hero-grid {
+                        display: grid;
+                        grid-template-columns: 1.1fr 0.9fr;
+                        gap: 36px;
+                        align-items: center;
+                }
+
+                .eyebrow {
+                        display: inline-flex;
+                        align-items: center;
+                        padding: 0.45rem 0.8rem;
+                        border-radius: 999px;
+                        background: var(--accent-soft);
+                        border: 1px solid rgba(79, 209, 197, 0.25);
+                        color: var(--accent);
+                        font-size: 0.78rem;
+                        letter-spacing: 0.08em;
+                        text-transform: uppercase;
+                        font-weight: 700;
+                        margin-bottom: 20px;
+                }
+
+                h1 {
+                        font-size: clamp(2.5rem, 5vw, 4.4rem);
+                        line-height: 1.06;
+                        margin: 0 0 18px;
+                        letter-spacing: -0.05em;
+                }
+
+                .hero-copy p {
+                        margin: 0 0 26px;
+                        color: var(--muted);
+                        font-size: 1.14rem;
+                        max-width: 620px;
+                }
+
+                .cta-row {
+                        display: flex;
+                        flex-wrap: wrap;
+                        gap: 16px;
+                        margin-bottom: 26px;
+                }
+
+                .mini-proof {
+                        display: flex;
+                        flex-wrap: wrap;
+                        gap: 28px;
+                        color: var(--muted);
+                        font-size: 0.92rem;
+                }
+
+                .mini-proof strong {
+                        color: var(--text);
+                        display: block;
+                        font-size: 1.2rem;
+                        margin-bottom: 4px;
+                }
+
+                .web-visual {
+                        position: relative;
+                        min-height: 440px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                }
+
+                .orbit {
+                        position: relative;
+                        width: min(100%, 500px);
+                        aspect-ratio: 1;
+                        border-radius: 50%;
+                        background: radial-gradient(circle, rgba(79, 209, 197, 0.14), rgba(13, 17, 23, 0.04) 60%, transparent 70%);
+                        border: 1px solid rgba(79, 209, 197, 0.18);
+                        box-shadow: inset 0 0 50px rgba(79, 209, 197, 0.1);
+                        animation: float 8s ease-in-out infinite;
+                }
+
+                @keyframes float {
+
+                        0%,
+                        100% {
+                                transform: translateY(0);
+                        }
+
+                        50% {
+                                transform: translateY(-10px);
+                        }
+                }
+
+                .node {
+                        position: absolute;
+                        width: 86px;
+                        height: 86px;
+                        border-radius: 50%;
+                        display: grid;
+                        place-items: center;
+                        background: linear-gradient(135deg, rgba(79, 209, 197, 0.22), rgba(63, 81, 107, 0.7));
+                        border: 1px solid rgba(79, 209, 197, 0.4);
+                        box-shadow: 0 12px 30px rgba(11, 20, 32, 0.55);
+                        font-weight: 700;
+                        font-size: 0.8rem;
+                        color: var(--text);
+                }
+
+                .node.small {
+                        width: 54px;
+                        height: 54px;
+                        font-size: 0.65rem;
+                        color: var(--muted);
+                }
+
+                .node:nth-child(1) {
+                        top: 14%;
+                        left: 12%;
+                }
+
+                .node:nth-child(2) {
+                        top: 18%;
+                        right: 14%;
+                }
+
+                .node:nth-child(3) {
+                        bottom: 12%;
+                        left: 22%;
+                }
+
+                .node:nth-child(4) {
+                        bottom: 18%;
+                        right: 20%;
+                }
+
+                .node:nth-child(5) {
+                        top: 40%;
+                        left: 42%;
+                }
+
+                .node:nth-child(6) {
+                        bottom: 36%;
+                        right: 42%;
+                }
+
+                .orbit::before,
+                .orbit::after {
+                        content: "";
+                        position: absolute;
+                        inset: 12%;
+                        border: 1px dashed rgba(79, 209, 197, 0.18);
+                        border-radius: 50%;
+                        transform: rotate(18deg);
+                }
+
+                .orbit::after {
+                        inset: 22%;
+                        border-style: solid;
+                        transform: rotate(-18deg);
+                }
+
+                .connection-line {
+                        position: absolute;
+                        height: 2px;
+                        background: linear-gradient(90deg, rgba(79, 209, 197, 0), rgba(79, 209, 197, 0.8), rgba(79, 209, 197, 0));
+                        opacity: 0.8;
+                        transform-origin: left center;
+                        animation: pulse 3s ease-in-out infinite;
+                }
+
+                @keyframes pulse {
+
+                        0%,
+                        100% {
+                                opacity: 0.3;
+                        }
+
+                        50% {
+                                opacity: 1;
+                        }
+                }
+
+                .section-title {
+                        font-size: clamp(2rem, 3vw, 3rem);
+                        margin: 0 0 14px;
+                        letter-spacing: -0.04em;
+                }
+
+                .section-copy {
+                        color: var(--muted);
+                        max-width: 760px;
+                        margin: 0 auto 32px;
+                        text-align: center;
+                        font-size: 1.05rem;
+                }
+
+                .intro-grid {
+                        display: grid;
+                        grid-template-columns: repeat(3, minmax(0, 1fr));
+                        gap: 24px;
+                        margin-top: 34px;
+                }
+
+                .card {
+                        background: rgba(19, 26, 36, 0.82);
+                        border: 1px solid var(--line);
+                        border-radius: 18px;
+                        padding: 26px 22px;
+                        box-shadow: 0 16px 30px var(--shadow);
+                }
+
+                .icon {
+                        width: 52px;
+                        height: 52px;
+                        border-radius: 16px;
+                        display: grid;
+                        place-items: center;
+                        background: var(--accent-soft);
+                        color: var(--accent);
+                        font-size: 1.5rem;
+                        margin-bottom: 18px;
+                        border: 1px solid rgba(79, 209, 197, 0.18);
+                }
+
+                .card h3 {
+                        margin: 0 0 12px;
+                        font-size: 1.28rem;
+                }
+
+                .card p {
+                        margin: 0;
+                        color: var(--muted);
+                }
+
+                .steps {
+                        display: grid;
+                        grid-template-columns: repeat(5, minmax(0, 1fr));
+                        gap: 20px;
+                        margin-top: 34px;
+                }
+
+                .step {
+                        position: relative;
+                        background: rgba(19, 26, 36, 0.8);
+                        border: 1px solid var(--line);
+                        border-radius: 18px;
+                        padding: 18px 18px 20px;
+                }
+
+                .step .number {
+                        display: inline-flex;
+                        width: 38px;
+                        height: 38px;
+                        align-items: center;
+                        justify-content: center;
+                        border-radius: 12px;
+                        background: linear-gradient(135deg, var(--accent-soft), rgba(79, 209, 197, 0.08));
+                        color: var(--accent);
+                        font-weight: 700;
+                        margin-bottom: 16px;
+                        border: 1px solid rgba(79, 209, 197, 0.2);
+                }
+
+                .step h4 {
+                        margin: 0 0 8px;
+                        font-size: 1.08rem;
+                }
+
+                .step p {
+                        margin: 0;
+                        color: var(--muted);
+                        font-size: 0.95rem;
+                }
+
+                .step:not(:last-child)::after {
+                        content: "→";
+                        position: absolute;
+                        right: -15px;
+                        top: 38%;
+                        color: var(--muted);
+                        font-size: 1.5rem;
+                }
+
+                .thread-grid {
+                        display: grid;
+                        grid-template-columns: repeat(2, minmax(0, 1fr));
+                        gap: 22px;
+                        margin-top: 36px;
+                }
+
+                .thread-card {
+                        background: rgba(19, 26, 36, 0.8);
+                        border: 1px solid var(--line);
+                        border-radius: 18px;
+                        padding: 24px;
+                }
+
+                .thread-card h3 {
+                        margin: 0 0 18px;
+                        font-size: 1.5rem;
+                }
+
+                .thread-flow {
+                        display: flex;
+                        flex-direction: column;
+                        gap: 12px;
+                        margin: 20px 0 0;
+                }
+
+                .thread-item {
+                        display: flex;
+                        align-items: center;
+                        gap: 12px;
+                        background: rgba(255, 255, 255, 0.02);
+                        border-radius: 10px;
+                        border: 1px solid var(--line);
+                        padding: 12px 14px;
+                        color: var(--muted);
+                }
+
+                .thread-dot {
+                        width: 12px;
+                        height: 12px;
+                        border-radius: 50%;
+                        background: var(--accent);
+                        box-shadow: 0 0 0 7px rgba(79, 209, 197, 0.14);
+                }
+
+                .thread-card.multi .thread-dot {
+                        background: var(--accent-2);
+                        box-shadow: 0 0 0 7px rgba(242, 166, 90, 0.12);
+                }
+
+                .callout {
+                        margin-top: 42px;
+                        padding: 18px 20px;
+                        border-radius: 14px;
+                        background: rgba(79, 209, 197, 0.08);
+                        border: 1px solid rgba(79, 209, 197, 0.25);
+                        color: var(--muted);
+                        text-align: center;
+                }
+
+                .try-grid {
+                        display: grid;
+                        grid-template-columns: repeat(2, minmax(0, 1fr));
+                        gap: 24px;
+                        margin-top: 34px;
+                }
+
+                .option-card {
+                        background: rgba(19, 26, 36, 0.82);
+                        border: 1px solid var(--line);
+                        border-radius: 18px;
+                        padding: 28px 24px;
+                        display: flex;
+                        flex-direction: column;
+                        gap: 18px;
+                }
+
+                .option-card h3 {
+                        margin: 0;
+                        font-size: 1.5rem;
+                }
+
+                .option-card p {
+                        margin: 0;
+                        color: var(--muted);
+                        flex: 1;
+                }
+
+                .tag {
+                        display: inline-flex;
+                        align-items: center;
+                        align-self: flex-start;
+                        padding: 0.5rem 0.8rem;
+                        border-radius: 999px;
+                        background: rgba(79, 209, 197, 0.1);
+                        border: 1px solid rgba(79, 209, 197, 0.2);
+                        color: var(--accent);
+                        font-size: 0.75rem;
+                        font-weight: 700;
+                        letter-spacing: 0.04em;
+                        text-transform: uppercase;
+                }
+
+                .footer-cta {
+                        text-align: center;
+                        margin-top: 18px;
+                }
+
+                @media (max-width: 980px) {
+
+                        .hero-grid,
+                        .intro-grid,
+                        .try-grid,
+                        .thread-grid,
+                        .steps {
+                                grid-template-columns: 1fr;
+                        }
+
+                        .step:not(:last-child)::after {
+                                display: none;
+                        }
+
+                        .nav {
+                                flex-wrap: wrap;
+                                justify-content: center;
+                                padding: 18px 0;
+                        }
+
+                        .nav-links {
+                                order: 3;
+                                width: 100%;
+                                justify-content: center;
+                        }
+                }
+
+                @media (max-width: 620px) {
+                        body {
+                                padding-bottom: 32px;
+                        }
+
+                        .hero {
+                                padding-top: 30px;
+                        }
+
+                        .btn {
+                                width: 100%;
+                        }
+
+                        .cta-row {
+                                flex-direction: column;
+                        }
+
+                        .mini-proof {
+                                flex-direction: column;
+                                gap: 16px;
+                        }
+                }
+        </style>
+</head>
+
+<body>
+        <header class="topbar">
+                <div class="container nav">
+                        <a href="/" class="brand" aria-label="Go to homepage">
+                                <span class="brand-mark">W</span>
+                                <span>WebSpider</span>
+                        </a>
+
+                        <nav class="nav-links" aria-label="Main navigation">
+                                <a href="#about">About</a>
+                                <a href="#how-it-works">How it works</a>
+                                <a href="#multithreading">Threads</a>
+                                <a href="#try-it">Try it</a>
+                        </nav>
+
+                        <div class="nav-actions">
+                                <a class="btn btn-secondary" href="/dashboard">Open Dashboard</a>
+                        </div>
+                </div>
+        </header>
+
+        <main>
+                <section class="hero">
+                        <div class="container hero-grid">
+                                <div class="hero-copy">
+                                        <div class="eyebrow">Learn the internet</div>
+                                        <h1>Discover How the Web Connects</h1>
+                                        <p>
+                                                Explore how a web crawler visits websites, discovers links, and maps the
+                                                connections between web pages.
+                                        </p>
+
+                                        <div class="cta-row">
+                                                <a class="btn btn-primary" href="/dashboard">Explore the Web Crawler</a>
+                                                <a class="btn btn-secondary" href="#about">Learn More</a>
+                                        </div>
+
+                                        <div class="mini-proof">
+                                                <div>
+                                                        <strong>Pages</strong>
+                                                        Connected by links
+                                                </div>
+                                                <div>
+                                                        <strong>Threads</strong>
+                                                        Working in parallel
+                                                </div>
+                                                <div>
+                                                        <strong>Results</strong>
+                                                        Mapped in real time
+                                                </div>
+                                        </div>
+                                </div>
+
+                                <div class="web-visual" aria-hidden="true">
+                                        <div class="orbit">
+                                                <div class="node">Home</div>
+                                                <div class="node">Docs</div>
+                                                <div class="node small">Blog</div>
+                                                <div class="node small">News</div>
+                                                <div class="node">Info</div>
+                                                <div class="node">Guide</div>
+                                        </div>
+                                </div>
+                        </div>
+                </section>
+
+                <section id="about">
+                        <div class="container">
+                                <h2 class="section-title" style="text-align:center;">What Is a Web Crawler?</h2>
+                                <p class="section-copy">
+                                        A web crawler is a program that automatically visits web pages and follows links
+                                        to discover other pages.
+                                        Search engines use crawlers to discover content across the internet. Our project
+                                        demonstrates how this process works
+                                        and how multiple threads can make crawling faster.
+                                </p>
+
+                                <div class="intro-grid">
+                                        <div class="card">
+                                                <div class="icon">🔎</div>
+                                                <h3>Find pages</h3>
+                                                <p>The crawler starts at a page and looks for links to more pages.</p>
+                                        </div>
+
+                                        <div class="card">
+                                                <div class="icon">🌐</div>
+                                                <h3>Follow links</h3>
+                                                <p>It keeps moving through connected pages and maps how they relate to
+                                                        each other.</p>
+                                        </div>
+
+                                        <div class="card">
+                                                <div class="icon">📊</div>
+                                                <h3>Analyze patterns</h3>
+                                                <p>It records what it finds so you can study the graph, timing, and
+                                                        crawl activity.</p>
+                                        </div>
+                                </div>
+                        </div>
+                </section>
+
+                <section id="how-it-works">
+                        <div class="container">
+                                <h2 class="section-title" style="text-align:center;">How It Works</h2>
+                                <p class="section-copy">
+                                        A crawler is simple to understand when you look at the steps it takes as it
+                                        explores the web.
+                                </p>
+
+                                <div class="steps">
+                                        <div class="step">
+                                                <div class="number">1</div>
+                                                <h4>Start</h4>
+                                                <p>Choose a website or a simulated web graph.</p>
+                                        </div>
+
+                                        <div class="step">
+                                                <div class="number">2</div>
+                                                <h4>Visit</h4>
+                                                <p>The crawler opens a page and reads what it contains.</p>
+                                        </div>
+
+                                        <div class="step">
+                                                <div class="number">3</div>
+                                                <h4>Discover</h4>
+                                                <p>It identifies links to other pages and new destinations.</p>
+                                        </div>
+
+                                        <div class="step">
+                                                <div class="number">4</div>
+                                                <h4>Explore</h4>
+                                                <p>It follows eligible links up to the configured depth and page limit.
+                                                </p>
+                                        </div>
+
+                                        <div class="step">
+                                                <div class="number">5</div>
+                                                <h4>Analyze</h4>
+                                                <p>View the graph, log activity, and performance statistics.</p>
+                                        </div>
+                                </div>
+                        </div>
+                </section>
+
+                <section id="multithreading">
+                        <div class="container">
+                                <h2 class="section-title" style="text-align:center;">Why Multithreading Helps</h2>
+                                <p class="section-copy">
+                                        Crawling can be done in different ways. Multithreading allows more than one page
+                                        to be processed at the same time.
+                                </p>
+
+                                <div class="thread-grid">
+                                        <div class="thread-card">
+                                                <h3>Single-threaded</h3>
+                                                <p style="color: var(--muted); margin: 0;">Processes pages one after
+                                                        another.</p>
+                                                <div class="thread-flow">
+                                                        <div class="thread-item"><span class="thread-dot"></span>Page A
+                                                        </div>
+                                                        <div class="thread-item"><span class="thread-dot"></span>Page B
+                                                        </div>
+                                                        <div class="thread-item"><span class="thread-dot"></span>Page C
+                                                        </div>
+                                                </div>
+                                        </div>
+
+                                        <div class="thread-card multi">
+                                                <h3>Multi-threaded</h3>
+                                                <p style="color: var(--muted); margin: 0;">Multiple worker threads can
+                                                        process eligible pages concurrently.</p>
+                                                <div class="thread-flow">
+                                                        <div class="thread-item"><span class="thread-dot"></span>Worker
+                                                                1 → Page A</div>
+                                                        <div class="thread-item"><span class="thread-dot"></span>Worker
+                                                                2 → Page B</div>
+                                                        <div class="thread-item"><span class="thread-dot"></span>Worker
+                                                                3 → Page C</div>
+                                                </div>
+                                        </div>
+                                </div>
+
+                                <div class="callout">
+                                        Actual speed depends on the website, network delay, crawler settings, and access
+                                        restrictions.
+                                </div>
+                        </div>
+                </section>
+
+                <section id="try-it">
+                        <div class="container">
+                                <h2 class="section-title" style="text-align:center;">Try It Yourself</h2>
+                                <p class="section-copy">
+                                        Choose a way to explore how a crawler behaves in practice.
+                                </p>
+
+                                <div class="try-grid">
+                                        <div class="option-card">
+                                                <span class="tag">Sample mode</span>
+                                                <h3>Simulated Crawl</h3>
+                                                <p>
+                                                        Explore a sample web graph without fetching real websites. This
+                                                        is a great way to learn how pages,
+                                                        links, and crawl depth work together.
+                                                </p>
+                                                <a class="btn btn-secondary" href="/dashboard">Launch Simulated
+                                                        Crawl</a>
+                                        </div>
+
+                                        <div class="option-card">
+                                                <span class="tag">Live mode</span>
+                                                <h3>Real Website Crawl</h3>
+                                                <p>
+                                                        Enter a seed URL and crawl a real website, subject to access
+                                                        restrictions, page limits, and crawl rules.
+                                                </p>
+                                                <a class="btn btn-primary" href="/dashboard">Launch Crawler
+                                                        Dashboard</a>
+                                        </div>
+                                </div>
+
+                                <div class="footer-cta">
+                                        <a class="btn btn-primary" href="/dashboard">Launch Crawler Dashboard</a>
+                                </div>
+                        </div>
+                </section>
+        </main>
+</body>
+
+</html>

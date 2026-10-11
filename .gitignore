@@ -1,0 +1,44 @@
+# Java build output
+*.class
+**/target/
+**/build/
+
+# Local dependency jars (download separately if needed)
+*.jar
+lib/
+
+# SQLite/local data
+*.db
+*.sqlite
+*.sqlite3
+crawler.db
+
+# Generated report exports
+report/*.xlsx
+report/*.xls
+
+# Environment and secrets
+.env
+.env.*
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+
+# IDE/editor noise
+.vscode/
+.idea/
+__pycache__/
+*.iml
+
+# OS metadata
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Local temp artifacts
+*.tmp
+*.bak

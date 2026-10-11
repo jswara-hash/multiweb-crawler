@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Crawler Report</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --panel: #131a24;
+    --line: #1f2937;
+    --text: #d8dee9;
+    --dim: #7b8794;
+    --accent: #4fd1c5;
+    --accent-2: #f2a65a;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Segoe UI", Roboto, Arial, sans-serif;
+    padding: 32px;
+  }
+  h1 {
+    font-size: 22px;
+    font-weight: 600;
+    margin: 0 0 4px 0;
+  }
+  .sub {
+    color: var(--dim);
+    font-size: 13px;
+    margin-bottom: 28px;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: 1.3fr 1fr;
+    gap: 20px;
+  }
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 18px;
+  }
+  .panel h2 {
+    font-size: 14px;
+    font-weight: 600;
+    margin: 0 0 14px 0;
+    color: var(--dim);
+  }
+  #graph {
+    width: 100%;
+    height: 340px;
+    display: block;
+  }
+  .log {
+    max-height: 340px;
+    overflow-y: auto;
+    font-family: "Consolas", monospace;
+    font-size: 12.5px;
+    line-height: 1.6;
+    scrollbar-width: thin;
+    scrollbar-color: #2a3542 var(--panel);
+  }
+  .log::-webkit-scrollbar {
+    width: 10px;
+  }
+  .log::-webkit-scrollbar-track {
+    background: var(--panel);
+  }
+  .log::-webkit-scrollbar-thumb {
+    background-color: #2a3542;
+    border-radius: 5px;
+    border: 2px solid var(--panel);
+  }
+  .log::-webkit-scrollbar-thumb:hover {
+    background-color: #3a4657;
+  }
+  .log div span.thread { color: var(--accent); }
+  .log div span.depth { color: var(--dim); }
+  .stats-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .stat {
+    text-align: left;
+  }
+  .stat .num {
+    font-size: 20px;
+    font-weight: 600;
+  }
+  .stat .label {
+    font-size: 11px;
+    color: var(--dim);
+  }
+  .bar-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 10px 0;
+    font-size: 12.5px;
+  }
+  .bar-row .name { width: 90px; color: var(--dim); }
+  .bar-track {
+    flex: 1;
+    background: var(--line);
+    border-radius: 4px;
+    height: 14px;
+    overflow: hidden;
+  }
+  .bar-fill {
+    height: 100%;
+    border-radius: 4px;
+  }
+  .bar-row .val { width: 70px; text-align: right; }
+  .full-row {
+    grid-column: 1 / -1;
+  }
+  .mode-btn {
+    background: var(--line);
+    color: var(--dim);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 7px 14px;
+    font-size: 12.5px;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .mode-btn:hover {
+    color: var(--text);
+  }
+  .mode-btn.active {
+    background: var(--accent);
+    color: #0d1117;
+    border-color: var(--accent);
+    font-weight: 600;
+  }
+</style>
+</head>
+<body>
+
+<h1>Crawl Report</h1>
+<div class="sub">Generated from crawler.db by export.JsonExporter.</div>
+
+<div class="grid">
+
+  <div class="panel full-row" style="padding: 12px 18px;">
+    <div id="modeToggle" style="display:flex; gap:8px;">
+      <button class="mode-btn" data-mode="single">Single-threaded</button>
+      <button class="mode-btn" data-mode="multi">Multi-threaded</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Crawl graph <span id="graphNote" style="color: var(--dim); font-weight: normal;"></span></h2>
+    <canvas id="graph"></canvas>
+    <div id="graphLegend" style="margin-top:10px;"></div>
+  </div>
+
+  <div class="panel">
+    <h2>Crawl log</h2>
+    <div class="log" id="log"></div>
+  </div>
+
+  <div class="panel full-row">
+    <h2>Run stats</h2>
+    <div class="stats-row" id="statCards"></div>
+    <div id="bars"></div>
+  </div>
+
+</div>
+
+<script>
+/* ---------------------------------------------------------
+   SAMPLE DATA - Person B/A will replace this by having Java
+   export the real crawl-result.json in this exact shape.
+   To go live: delete SAMPLE_DATA and instead do:
+     fetch('crawl-result.json').then(r => r.json()).then(render);
+--------------------------------------------------------- */
+const DATA = /*CRAWL_DATA_START*/{
+  pages: [
+    { id: "P1", links: ["P2", "P3"] },
+    { id: "P2", links: ["P4"] },
+    { id: "P3", links: ["P5", "P6"] },
+    { id: "P4", links: ["P1"] },
+    { id: "P5", links: ["P3"] },
+    { id: "P6", links: [] }
+  ],
+  runs: {
+    single: {
+      crawlLog: [
+        { page: "P1", thread: "main", timeMs: 0,  depth: 0 },
+        { page: "P2", thread: "main", timeMs: 20, depth: 1 },
+        { page: "P3", thread: "main", timeMs: 40, depth: 1 },
+        { page: "P4", thread: "main", timeMs: 60, depth: 2 },
+        { page: "P5", thread: "main", timeMs: 80, depth: 2 },
+        { page: "P6", thread: "main", timeMs: 100, depth: 2 }
+      ]
+    },
+    multi: {
+      crawlLog: [
+        { page: "P1", thread: "Thread-1", timeMs: 0,  depth: 0 },
+        { page: "P2", thread: "Thread-2", timeMs: 12, depth: 1 },
+        { page: "P3", thread: "Thread-1", timeMs: 15, depth: 1 },
+        { page: "P4", thread: "Thread-2", timeMs: 30, depth: 2 },
+        { page: "P5", thread: "Thread-1", timeMs: 34, depth: 2 },
+        { page: "P6", thread: "Thread-1", timeMs: 40, depth: 2 }
+      ]
+    }
+  },
+  stats: {
+    singleThreadedMs: 4200,
+    multiThreadedMs: 980,
+    threadsUsed: 4
+  }
+}/*CRAWL_DATA_END*/;
+
+let currentMode = "multi";
+
+function render(data) {
+  renderStats(data.stats, data.pages.length);
+  setupToggle(data);
+  renderMode(data, currentMode);
+}
+
+function setupToggle(data) {
+  const buttons = document.querySelectorAll(".mode-btn");
+  buttons.forEach(btn => {
+    if (btn.dataset.mode === currentMode) btn.classList.add("active");
+    btn.addEventListener("click", () => {
+      currentMode = btn.dataset.mode;
+      buttons.forEach(b => b.classList.toggle("active", b === btn));
+      renderMode(data, currentMode);
+    });
+  });
+}
+
+function renderMode(data, mode) {
+  const log = data.runs[mode].crawlLog;
+  renderLog(log);
+  renderGraph(data.pages, log);
+}
+
+/* Converts Java's raw default thread names ("pool-1-thread-3") into a
+   cleaner presentation label ("Thread 3"). Purely cosmetic - only affects
+   what's shown in the report, not the underlying data or Java code. */
+function friendlyThreadName(rawName) {
+  const match = rawName.match(/thread-(\d+)$/i);
+  if (match) return "Thread " + match[1];
+  return rawName; // e.g. "main" in single-threaded mode - left as is
+}
+
+function renderLog(log) {
+  const el = document.getElementById("log");
+  el.innerHTML = log.map(entry =>
+    `<div>[<span class="thread">${friendlyThreadName(entry.thread)}</span>] visited ${entry.page} ` +
+    `<span class="depth">(depth ${entry.depth}, +${entry.timeMs}ms)</span></div>`
+  ).join("");
+}
+
+function renderStats(stats, totalPages) {
+  const speedup = (stats.singleThreadedMs / stats.multiThreadedMs).toFixed(1);
+  const cards = document.getElementById("statCards");
+  cards.innerHTML = `
+    <div class="stat"><div class="num">${totalPages}</div><div class="label">pages visited</div></div>
+    <div class="stat"><div class="num">${stats.threadsUsed}</div><div class="label">threads used</div></div>
+    <div class="stat"><div class="num">${speedup}x</div><div class="label">speedup</div></div>
+  `;
+
+  const maxMs = Math.max(stats.singleThreadedMs, stats.multiThreadedMs);
+  const bars = document.getElementById("bars");
+  bars.innerHTML = `
+    <div class="bar-row">
+      <div class="name">Single</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${(stats.singleThreadedMs/maxMs*100)}%; background:var(--accent-2)"></div></div>
+      <div class="val">${stats.singleThreadedMs} ms</div>
+    </div>
+    <div class="bar-row">
+      <div class="name">Multi</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${(stats.multiThreadedMs/maxMs*100)}%; background:var(--accent)"></div></div>
+      <div class="val">${stats.multiThreadedMs} ms</div>
+    </div>
+  `;
+}
+
+/* Simple circular layout - good enough to show nodes + edges + visited order.
+   Caps the number of nodes actually drawn, since cramming 300 circles onto
+   one small canvas just produces an unreadable overlapping ring. Picks the
+   first N pages in crawl order so the visual still tells a coherent story. */
+function renderGraph(pages, log) {
+  const MAX_NODES = 40;
+  const notEl = document.getElementById("graphNote");
+
+  let displayPages = pages;
+  if (pages.length > MAX_NODES) {
+    const orderedIds = [];
+    const seen = new Set();
+    for (const entry of log) {
+      if (!seen.has(entry.page)) {
+        seen.add(entry.page);
+        orderedIds.push(entry.page);
+      }
+      if (orderedIds.length >= MAX_NODES) break;
+    }
+    const idSet = new Set(orderedIds);
+    displayPages = pages.filter(p => idSet.has(p.id)).map(p => ({
+      id: p.id,
+      links: p.links.filter(l => idSet.has(l))
+    }));
+    notEl.textContent = `(showing first ${displayPages.length} of ${pages.length} pages)`;
+  } else {
+    notEl.textContent = "";
+  }
+
+  const canvas = document.getElementById("graph");
+  const ctx = canvas.getContext("2d");
+  const width = canvas.clientWidth;
+  const height = 340;
+  canvas.width = width;
+  canvas.height = height;
+
+  const visitedOrder = {};
+  log.forEach((entry, i) => visitedOrder[entry.page] = i);
+
+  // Grid layout: fills the full width/height of the box instead of
+  // bunching everything into a circle in the middle.
+  const padding = 30;
+  const usableWidth = width - padding * 2;
+  const usableHeight = height - padding * 2;
+  const n = displayPages.length;
+  const cols = Math.ceil(Math.sqrt(n * (usableWidth / usableHeight)));
+  const rows = Math.ceil(n / cols);
+  const cellWidth = usableWidth / cols;
+  const cellHeight = usableHeight / rows;
+
+  const positions = {};
+  displayPages.forEach((p, i) => {
+    const col = i % cols;
+    const row = Math.floor(i / cols);
+    positions[p.id] = {
+      x: padding + cellWidth * col + cellWidth / 2,
+      y: padding + cellHeight * row + cellHeight / 2
+    };
+  });
+
+  ctx.clearRect(0, 0, width, height);
+
+  // edges - lightened for visibility against the dark background
+  // edges - only draw once BOTH endpoints have actually been visited.
+  const visitedIds = new Set(log.map(e => e.page));
+  ctx.strokeStyle = "#425064";
+  ctx.lineWidth = 1.2;
+  displayPages.forEach(p => {
+    if (!visitedIds.has(p.id)) return;
+    const from = positions[p.id];
+    p.links.forEach(targetId => {
+      if (!visitedIds.has(targetId)) return;
+      const to = positions[targetId];
+      if (!to) return;
+      ctx.beginPath();
+      ctx.moveTo(from.x, from.y);
+      ctx.lineTo(to.x, to.y);
+      ctx.stroke();
+    });
+  });
+
+  // Color each node by which thread visited it. In single-threaded mode
+  // every node will be one color ("main"). In multi-threaded mode you'll
+  // see several distinct colors scattered across the graph - that's the
+  // visual proof multiple threads were genuinely working at once.
+  const threadColors = ["#4fd1c5", "#f2a65a", "#c792ea", "#7ee787", "#f28fad", "#82aaff", "#f6c177", "#eb6f92"];
+  const threadOf = {};
+  const colorForThread = {};
+  let nextColor = 0;
+  log.forEach(entry => {
+    if (!(entry.page in threadOf)) threadOf[entry.page] = entry.thread;
+    if (!(entry.thread in colorForThread)) {
+      colorForThread[entry.thread] = threadColors[nextColor % threadColors.length];
+      nextColor++;
+    }
+  });
+
+  const nodeRadius = Math.max(8, Math.min(16, Math.min(cellWidth, cellHeight) / 2 - 4));
+  const fontSize = Math.max(8, Math.min(11, nodeRadius - 2));
+
+  displayPages.forEach(p => {
+    const pos = positions[p.id];
+    const thread = threadOf[p.id];
+    const color = thread ? colorForThread[thread] : "#2a3542";
+
+    ctx.beginPath();
+    ctx.arc(pos.x, pos.y, nodeRadius, 0, 2 * Math.PI);
+    ctx.fillStyle = color;
+    ctx.fill();
+
+    ctx.fillStyle = "#0d1117";
+    ctx.font = fontSize + "px Consolas, monospace";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(p.id, pos.x, pos.y);
+  });
+
+  renderLegend(colorForThread);
+}
+
+function renderLegend(colorForThread) {
+  const container = document.getElementById("graphLegend");
+  const threads = Object.keys(colorForThread);
+  if (threads.length <= 1) {
+    container.innerHTML = "";
+    return;
+  }
+  container.innerHTML = threads.map(t =>
+    `<span style="display:inline-flex; align-items:center; gap:5px; margin-right:12px; font-size:11px; color: var(--dim);">
+      <span style="width:9px; height:9px; border-radius:50%; background:${colorForThread[t]}; display:inline-block;"></span>${friendlyThreadName(t)}
+    </span>`
+  ).join("");
+}
+
+render(DATA);
+</script>
+
+</body>
+</html>

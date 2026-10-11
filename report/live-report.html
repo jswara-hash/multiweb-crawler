@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Crawler Control Panel</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --panel: #131a24;
+      --line: #1f2937;
+      --text: #d8dee9;
+      --dim: #7b8794;
+      --accent: #4fd1c5;
+      --accent-2: #f2a65a;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Segoe UI", Roboto, Arial, sans-serif;
+      padding: 32px;
+    }
+
+    h1 {
+      font-size: 22px;
+      font-weight: 600;
+      margin: 0 0 4px 0;
+    }
+
+    .sub {
+      color: var(--dim);
+      font-size: 13px;
+      margin-bottom: 28px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1.3fr 1fr;
+      gap: 20px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 18px;
+    }
+
+    .panel h2 {
+      font-size: 14px;
+      font-weight: 600;
+      margin: 0 0 14px 0;
+      color: var(--dim);
+    }
+
+    #graph {
+      width: 100%;
+      height: 340px;
+      display: block;
+    }
+
+    .log {
+      max-height: 340px;
+      overflow-y: auto;
+      font-family: "Consolas", monospace;
+      font-size: 12.5px;
+      line-height: 1.6;
+      scrollbar-width: thin;
+      scrollbar-color: #2a3542 var(--panel);
+    }
+
+    .log::-webkit-scrollbar {
+      width: 10px;
+    }
+
+    .log::-webkit-scrollbar-track {
+      background: var(--panel);
+    }
+
+    .log::-webkit-scrollbar-thumb {
+      background-color: #2a3542;
+      border-radius: 5px;
+      border: 2px solid var(--panel);
+    }
+
+    .log::-webkit-scrollbar-thumb:hover {
+      background-color: #3a4657;
+    }
+
+    .log div span.thread {
+      color: var(--accent);
+    }
+
+    .log div span.depth {
+      color: var(--dim);
+    }
+
+    .stats-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .stat .num {
+      font-size: 20px;
+      font-weight: 600;
+    }
+
+    .stat .label {
+      font-size: 11px;
+      color: var(--dim);
+    }
+
+    .bar-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 10px 0;
+      font-size: 12.5px;
+    }
+
+    .bar-row .name {
+      width: 90px;
+      color: var(--dim);
+    }
+
+    .bar-track {
+      flex: 1;
+      background: var(--line);
+      border-radius: 4px;
+      height: 14px;
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%;
+      border-radius: 4px;
+    }
+
+    .bar-row .val {
+      width: 70px;
+      text-align: right;
+    }
+
+    .full-row {
+      grid-column: 1 / -1;
+    }
+
+    .mode-btn {
+      background: var(--line);
+      color: var(--dim);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 7px 14px;
+      font-size: 12.5px;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .mode-btn:hover {
+      color: var(--text);
+    }
+
+    .mode-btn.active {
+      background: var(--accent);
+      color: #0d1117;
+      border-color: var(--accent);
+      font-weight: 600;
+    }
+
+    .controls {
+      display: flex;
+      align-items: flex-end;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .field label {
+      font-size: 11px;
+      color: var(--dim);
+    }
+
+    .field input {
+      background: var(--bg);
+      border: 1px solid var(--line);
+      border-radius: 5px;
+      color: var(--text);
+      padding: 7px 9px;
+      font-size: 12.5px;
+      width: 92px;
+      font-family: inherit;
+    }
+
+    .run-btn {
+      background: var(--accent);
+      color: #0d1117;
+      border: none;
+      border-radius: 6px;
+      padding: 9px 20px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .run-btn:hover {
+      background: #63ded2;
+    }
+
+    .run-btn:disabled {
+      background: var(--line);
+      color: var(--dim);
+      cursor: not-allowed;
+    }
+
+    #status {
+      font-size: 12.5px;
+      color: var(--dim);
+    }
+
+    #status.error {
+      color: #eb6f92;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h1>Crawler Control Panel</h1>
+  <div class="sub">Runs live against the Java crawler at localhost:8080. <span id="resultSource"
+      style="color: var(--accent);"></span></div>
+
+  <div class="grid">
+
+    <div class="panel full-row">
+      <h2>Run a crawl</h2>
+      <div class="controls" style="margin-bottom:14px;">
+        <div class="field">
+          <label for="source">Source</label>
+          <select id="source"
+            style="background: var(--bg); border: 1px solid var(--line); border-radius: 5px; color: var(--text); padding: 7px 9px; font-size: 12.5px; width: 150px; font-family: inherit;">
+            <option value="simulated">Simulated graph</option>
+            <option value="real">Real website</option>
+          </select>
+        </div>
+        <div class="field" id="seedUrlField" style="display:none; flex: 1; min-width: 220px;">
+          <label for="seedUrl">Seed URL</label>
+          <input type="text" id="seedUrl" value="https://en.wikipedia.org/wiki/Web_crawler" style="width: 100%;">
+        </div>
+      </div>
+      <div class="controls">
+        <div class="field">
+          <label for="pages" id="pagesLabel">Pages</label>
+          <input type="number" id="pages" value="300" min="1" max="5000">
+        </div>
+        <div class="field">
+          <label for="threads">Threads</label>
+          <input type="number" id="threads" value="8" min="1" max="64">
+        </div>
+        <div class="field">
+          <label for="depth">Max depth</label>
+          <input type="number" id="depth" value="8" min="0" max="50">
+        </div>
+        <div class="field">
+          <label for="latency" id="latencyLabel">Latency (ms/page)</label>
+          <input type="number" id="latency" value="20" min="0" max="500">
+        </div>
+        <button class="run-btn" id="runBtn">Run crawl</button>
+        <button class="mode-btn" id="exportBtn" type="button"
+          style="background: var(--accent-2); color: #0d1117; border-color: var(--accent-2); font-weight: 600;">Export
+          to Excel</button>
+        <span id="status">Loading latest results…</span>
+      </div>
+    </div>
+
+    <div class="panel full-row" style="padding: 12px 18px;">
+      <div id="modeToggle" style="display:flex; gap:8px;">
+        <button class="mode-btn" data-mode="single">Single-threaded</button>
+        <button class="mode-btn" data-mode="multi">Multi-threaded</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Crawl graph <span id="graphNote" style="color: var(--dim); font-weight: normal;"></span></h2>
+      <canvas id="graph"></canvas>
+      <div id="graphLegend" style="margin-top:10px;"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Crawl log</h2>
+      <div class="log" id="log"></div>
+    </div>
+
+    <div class="panel full-row" id="statsPanel">
+      <h2>Run stats</h2>
+      <div class="stats-row" id="statCards"></div>
+      <div id="bars"></div>
+    </div>
+
+  </div>
+
+  <script>
+    let currentMode = "multi";
+    let currentData = null;
+    let pollTimer = null;
+    let lastSeq = 0;
+    let userOverrodeMode = false;
+    let polling = false;
+
+    /* ---------- source toggle (simulated vs real) ---------- */
+
+    document.getElementById("source").addEventListener("change", (e) => {
+      const isReal = e.target.value === "real";
+      document.getElementById("seedUrlField").style.display = isReal ? "flex" : "none";
+      document.getElementById("pagesLabel").textContent = isReal ? "Max pages to fetch" : "Pages";
+      document.getElementById("latencyLabel").textContent = isReal ? "Politeness delay (ms)" : "Latency (ms/page)";
+      if (isReal) {
+        document.getElementById("pages").value = "20";
+      } else {
+        document.getElementById("pages").value = "300";
+      }
+    });
+
+    document.getElementById("exportBtn").addEventListener("click", exportToExcel);
+
+    /* ---------- server communication ---------- */
+
+    function setStatus(message, isError) {
+      const el = document.getElementById("status");
+      el.textContent = message;
+      el.className = isError ? "error" : "";
+    }
+
+    function upsertPage(pageId, links) {
+      if (!currentData) return;
+      const existing = currentData.pages.find(p => p.id === pageId);
+      if (existing) {
+        existing.links = links;
+      } else {
+        currentData.pages.push({ id: pageId, links: links });
+      }
+    }
+
+    function updateSourceLabel(data) {
+      const el = document.getElementById("resultSource");
+      if (!data.source || data.source === "none") {
+        el.textContent = "";
+      } else if (data.source === "real") {
+        el.textContent = `— showing REAL crawl of ${data.seedUrl}`;
+      } else {
+        el.textContent = "— showing SIMULATED crawl";
+      }
+    }
+
+    async function loadResults() {
+      try {
+        const res = await fetch("/api/results");
+        const data = await res.json();
+        if (data.error) {
+          setStatus("No previous run found — click Run crawl to start.", false);
+          return;
+        }
+        currentData = data;
+        render(data);
+        updateSourceLabel(data);
+        setStatus("Showing latest saved run.", false);
+      } catch (err) {
+        setStatus("Could not reach server: " + err.message, true);
+      }
+    }
+
+    async function exportToExcel() {
+      const exportBtn = document.getElementById("exportBtn");
+      exportBtn.disabled = true;
+      setStatus("Exporting latest crawl as Excel…", false);
+
+      try {
+        const res = await fetch("/api/export/xlsx");
+        if (!res.ok) {
+          const errJson = await res.json().catch(() => ({}));
+          throw new Error(errJson.error || "Excel export failed.");
+        }
+
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        const ts = new Date().toISOString().replace(/[:.]/g, "-");
+        a.href = url;
+        a.download = `crawler_report_${ts}.xlsx`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+        setStatus("Excel export downloaded successfully.", false);
+      } catch (err) {
+        setStatus("Export failed: " + err.message, true);
+      } finally {
+        exportBtn.disabled = false;
+      }
+    }
+
+    async function runCrawl() {
+      const btn = document.getElementById("runBtn");
+      const source = document.getElementById("source").value;
+      const pages = document.getElementById("pages").value;
+      const threads = document.getElementById("threads").value;
+      const depth = document.getElementById("depth").value;
+      const latency = document.getElementById("latency").value;
+      const seedUrl = document.getElementById("seedUrl").value;
+
+      btn.disabled = true;
+      userOverrodeMode = false;
+      setStatus(source === "real" ? "Starting real crawl…" : "Starting crawl…", false);
+
+      try {
+        let url = `/api/run?source=${source}&pages=${pages}&threads=${threads}&depth=${depth}&latency=${latency}`;
+        if (source === "real") {
+          url += `&seedUrl=${encodeURIComponent(seedUrl)}`;
+        }
+        const res = await fetch(url, { method: "POST" });
+        const data = await res.json();
+        if (data.error) {
+          setStatus("Error: " + data.error, true);
+          btn.disabled = false;
+          return;
+        }
+
+        // Simulated mode gets the full graph upfront; real mode starts empty
+        // and grows as pages are actually fetched.
+        currentData = {
+          pages: data.pages,
+          runs: { single: { crawlLog: [] }, multi: { crawlLog: [] } }
+        };
+        lastSeq = 0;
+        polling = false;
+        document.getElementById("statsPanel").style.opacity = "1";
+        showPendingStats();
+        renderMode(currentData, currentMode);
+
+        pollTimer = setInterval(() => { if (!polling) pollProgress(); }, 150);
+      } catch (err) {
+        setStatus("Request failed: " + err.message, true);
+        btn.disabled = false;
+      }
+    }
+
+    async function pollProgress() {
+      polling = true;
+      try {
+        const res = await fetch(`/api/progress?since=${lastSeq}`);
+        const data = await res.json();
+
+        if (data.events.length > 0) {
+          for (const event of data.events) {
+            currentData.runs[event.mode].crawlLog.push({
+              page: event.page,
+              thread: event.thread,
+              timeMs: event.elapsedMs,
+              depth: event.depth
+            });
+
+            // Real mode: the graph isn't known upfront, so grow it here as
+            // each page's links are discovered.
+            upsertPage(event.page, event.links || []);
+            for (const linkedId of (event.links || [])) {
+              if (!currentData.pages.find(p => p.id === linkedId)) {
+                currentData.pages.push({ id: linkedId, links: [] });
+              }
+            }
+
+            if (!userOverrodeMode && event.mode !== currentMode) {
+              currentMode = event.mode;
+              document.querySelectorAll(".mode-btn").forEach(b =>
+                b.classList.toggle("active", b.dataset.mode === currentMode));
+            }
+          }
+          lastSeq = data.latestSeq;
+          renderMode(currentData, currentMode);
+
+          const activeCount = currentData.runs[currentMode].crawlLog.length;
+          const phase = currentMode === "single" ? "single-threaded" : "multi-threaded";
+          setStatus(`Crawling (${phase})… ${activeCount} pages visited so far`, false);
+        }
+
+        if (!data.running) {
+          clearInterval(pollTimer);
+          pollTimer = null;
+          await finishRun();
+        }
+      } catch (err) {
+        setStatus("Lost connection to server: " + err.message, true);
+        clearInterval(pollTimer);
+        pollTimer = null;
+        document.getElementById("runBtn").disabled = false;
+      } finally {
+        polling = false;
+      }
+    }
+
+    async function finishRun() {
+      try {
+        const res = await fetch("/api/results");
+        const data = await res.json();
+        currentData = data;
+        render(data);
+        updateSourceLabel(data);
+        document.getElementById("statsPanel").style.opacity = "1";
+        const speedup = (data.stats.singleThreadedMs / data.stats.multiThreadedMs).toFixed(2);
+        setStatus(`Done — ${speedup}x faster with ${data.stats.threadsUsed} threads.`, false);
+      } catch (err) {
+        setStatus("Finished, but could not load final stats: " + err.message, true);
+      } finally {
+        document.getElementById("runBtn").disabled = false;
+      }
+    }
+
+    /* ---------- rendering ---------- */
+
+    function render(data) {
+      renderStats(data.stats, data.pages.length);
+      renderMode(data, currentMode);
+    }
+
+    function setupToggle() {
+      const buttons = document.querySelectorAll(".mode-btn");
+      buttons.forEach(btn => {
+        if (btn.dataset.mode === currentMode) btn.classList.add("active");
+        btn.addEventListener("click", () => {
+          currentMode = btn.dataset.mode;
+          userOverrodeMode = true;
+          buttons.forEach(b => b.classList.toggle("active", b === btn));
+          if (currentData) renderMode(currentData, currentMode);
+        });
+      });
+    }
+
+    function renderMode(data, mode) {
+      const log = data.runs[mode].crawlLog;
+      renderLog(log);
+      renderGraph(data.pages, log);
+    }
+
+    /* Converts Java's raw default thread names ("pool-1-thread-3") into a
+       cleaner presentation label ("Thread 3"). Purely cosmetic. */
+    function friendlyThreadName(rawName) {
+      const match = rawName.match(/thread-(\d+)$/i);
+      if (match) return "Thread " + match[1];
+      return rawName;
+    }
+
+    function renderLog(log) {
+      const el = document.getElementById("log");
+      el.innerHTML = log.map(entry =>
+        `<div>[<span class="thread">${friendlyThreadName(entry.thread)}</span>] visited ${entry.page} ` +
+        `<span class="depth">(depth ${entry.depth}, +${entry.timeMs}ms)</span></div>`
+      ).join("");
+    }
+
+    function showPendingStats() {
+      document.getElementById("statCards").innerHTML = `
+    <div class="stat"><div class="num">—</div><div class="label">pages visited</div></div>
+    <div class="stat"><div class="num">—</div><div class="label">threads used</div></div>
+    <div class="stat"><div class="num">—</div><div class="label">speedup</div></div>
+  `;
+      document.getElementById("bars").innerHTML = `
+    <div class="bar-row">
+      <div class="name">Single</div>
+      <div class="bar-track"><div class="bar-fill" style="width:0%; background:var(--accent-2)"></div></div>
+      <div class="val">—</div>
+    </div>
+    <div class="bar-row">
+      <div class="name">Multi</div>
+      <div class="bar-track"><div class="bar-fill" style="width:0%; background:var(--accent)"></div></div>
+      <div class="val">—</div>
+    </div>
+  `;
+    }
+
+    function renderStats(stats, totalPages) {
+      const speedup = (stats.singleThreadedMs / stats.multiThreadedMs).toFixed(1);
+      document.getElementById("statCards").innerHTML = `
+    <div class="stat"><div class="num">${totalPages}</div><div class="label">pages visited</div></div>
+    <div class="stat"><div class="num">${stats.threadsUsed}</div><div class="label">threads used</div></div>
+    <div class="stat"><div class="num">${speedup}x</div><div class="label">speedup</div></div>
+  `;
+
+      const maxMs = Math.max(stats.singleThreadedMs, stats.multiThreadedMs);
+      document.getElementById("bars").innerHTML = `
+    <div class="bar-row">
+      <div class="name">Single</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${(stats.singleThreadedMs / maxMs * 100)}%; background:var(--accent-2)"></div></div>
+      <div class="val">${stats.singleThreadedMs} ms</div>
+    </div>
+    <div class="bar-row">
+      <div class="name">Multi</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${(stats.multiThreadedMs / maxMs * 100)}%; background:var(--accent)"></div></div>
+      <div class="val">${stats.multiThreadedMs} ms</div>
+    </div>
+  `;
+    }
+
+    /* Shortens a page id for the small node label. Simulated ids ("P42")
+       are already short and pass through unchanged. Real URLs get reduced
+       to just their last path segment (e.g. "/wiki/Web_crawler" -> "Web_crawler"). */
+    function shortLabel(pageId) {
+      if (pageId.length <= 10) return pageId;
+      try {
+        const path = new URL(pageId).pathname;
+        const parts = path.split("/").filter(Boolean);
+        const last = parts.length > 0 ? parts[parts.length - 1] : pageId;
+        return last.length > 12 ? last.slice(0, 11) + "…" : last;
+      } catch (e) {
+        return pageId.slice(0, 10) + "…";
+      }
+    }
+
+    function renderGraph(pages, log) {
+      const MAX_NODES = 40;
+      const notEl = document.getElementById("graphNote");
+
+      let displayPages = pages;
+      if (pages.length > MAX_NODES) {
+        const orderedIds = [];
+        const seen = new Set();
+        for (const entry of log) {
+          if (!seen.has(entry.page)) {
+            seen.add(entry.page);
+            orderedIds.push(entry.page);
+          }
+          if (orderedIds.length >= MAX_NODES) break;
+        }
+        // Fill any remaining slots from the original page order - covers the
+        // case where the crawl hasn't visited 40 pages yet (or any yet at all).
+        if (orderedIds.length < MAX_NODES) {
+          for (const p of pages) {
+            if (orderedIds.length >= MAX_NODES) break;
+            if (!seen.has(p.id)) {
+              seen.add(p.id);
+              orderedIds.push(p.id);
+            }
+          }
+        }
+        const idSet = new Set(orderedIds);
+        displayPages = pages.filter(p => idSet.has(p.id)).map(p => ({
+          id: p.id,
+          links: p.links.filter(l => idSet.has(l))
+        }));
+        notEl.textContent = `(showing first ${displayPages.length} of ${pages.length} pages)`;
+      } else {
+        notEl.textContent = "";
+      }
+
+      const canvas = document.getElementById("graph");
+      const ctx = canvas.getContext("2d");
+      const width = canvas.clientWidth;
+      const height = 340;
+      canvas.width = width;
+      canvas.height = height;
+
+      const padding = 30;
+      const usableWidth = width - padding * 2;
+      const usableHeight = height - padding * 2;
+      const n = displayPages.length;
+      const cols = Math.ceil(Math.sqrt(n * (usableWidth / usableHeight)));
+      const rows = Math.ceil(n / cols);
+      const cellWidth = usableWidth / cols;
+      const cellHeight = usableHeight / rows;
+
+      const positions = {};
+      displayPages.forEach((p, i) => {
+        const col = i % cols;
+        const row = Math.floor(i / cols);
+        positions[p.id] = {
+          x: padding + cellWidth * col + cellWidth / 2,
+          y: padding + cellHeight * row + cellHeight / 2
+        };
+      });
+
+      ctx.clearRect(0, 0, width, height);
+
+      // edges - only draw once BOTH endpoints have actually been visited,
+      // so the pre-crawl / in-progress view doesn't show connections for
+      // pages that haven't been reached yet.
+      const visitedIds = new Set(log.map(e => e.page));
+      ctx.strokeStyle = "#425064";
+      ctx.lineWidth = 1.2;
+      displayPages.forEach(p => {
+        if (!visitedIds.has(p.id)) return;
+        const from = positions[p.id];
+        p.links.forEach(targetId => {
+          if (!visitedIds.has(targetId)) return;
+          const to = positions[targetId];
+          if (!to) return;
+          ctx.beginPath();
+          ctx.moveTo(from.x, from.y);
+          ctx.lineTo(to.x, to.y);
+          ctx.stroke();
+        });
+      });
+
+      const threadColors = ["#4fd1c5", "#f2a65a", "#c792ea", "#7ee787", "#f28fad", "#82aaff", "#f6c177", "#eb6f92"];
+      const threadOf = {};
+      const colorForThread = {};
+      let nextColor = 0;
+      log.forEach(entry => {
+        if (!(entry.page in threadOf)) threadOf[entry.page] = entry.thread;
+        if (!(entry.thread in colorForThread)) {
+          colorForThread[entry.thread] = threadColors[nextColor % threadColors.length];
+          nextColor++;
+        }
+      });
+
+      const nodeRadius = Math.max(8, Math.min(16, Math.min(cellWidth, cellHeight) / 2 - 4));
+      const fontSize = Math.max(8, Math.min(11, nodeRadius - 2));
+
+      displayPages.forEach(p => {
+        const pos = positions[p.id];
+        const thread = threadOf[p.id];
+        const color = thread ? colorForThread[thread] : "#2a3542";
+
+        ctx.beginPath();
+        ctx.arc(pos.x, pos.y, nodeRadius, 0, 2 * Math.PI);
+        ctx.fillStyle = color;
+        ctx.fill();
+
+        ctx.fillStyle = "#0d1117";
+        ctx.font = fontSize + "px Consolas, monospace";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(shortLabel(p.id), pos.x, pos.y);
+      });
+
+      renderLegend(colorForThread);
+    }
+
+    function renderLegend(colorForThread) {
+      const container = document.getElementById("graphLegend");
+      const threads = Object.keys(colorForThread);
+      if (threads.length <= 1) {
+        container.innerHTML = "";
+        return;
+      }
+      container.innerHTML = threads.map(t =>
+        `<span style="display:inline-flex; align-items:center; gap:5px; margin-right:12px; font-size:11px; color: var(--dim);">
+      <span style="width:9px; height:9px; border-radius:50%; background:${colorForThread[t]}; display:inline-block;"></span>${friendlyThreadName(t)}
+    </span>`
+      ).join("");
+    }
+
+    /* ---------- init ---------- */
+    document.getElementById("runBtn").addEventListener("click", runCrawl);
+    setupToggle();
+    loadResults();
+  </script>
+
+</body>
+
+</html>
