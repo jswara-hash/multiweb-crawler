@@ -1,12 +1,12 @@
 package export;
 
+import db.DatabaseManager;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -14,49 +14,18 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * Day 5: reads the crawl results out of the SQLite database and produces a
+ * Day 5: reads the crawl results out of the database and produces a
  * single, self-contained HTML report with the real data baked in.
- *
- * Why not export a separate JSON file? Browsers block fetch() of local files
- * opened directly (file://) for security reasons, so a JSON file would need a
- * local web server to actually load. Baking the data directly into the HTML
- * avoids that entirely - just double-click the output file and it works.
- *
- * How it works: 1. Reads report/report.html as a template. 2. Queries
- * pages+links, the latest single-threaded run, the latest multi-threaded run,
- * and that multi-threaded run's crawl log. 3. Builds the same JSON shape the
- * template expects. 4. Replaces the text between /*CRAWL_DATA_START*\/ and
- * /*CRAWL_DATA_END*\/ markers in the template with the real data. 5. Writes the
- * result to report/crawl-report.html.
  */
 public class JsonExporter {
 
-    private static final String DB_URL = resolveDatabaseUrl();
     private static final String TEMPLATE_PATH = "report/report.html";
-
-    private static String resolveDatabaseUrl() {
-        String configured = System.getenv("DB_PATH");
-        Path databasePath = (configured != null && !configured.trim().isEmpty())
-                ? Paths.get(configured)
-                : Paths.get("data", "crawler.db");
-
-        Path parent = databasePath.getParent();
-        if (parent != null) {
-            try {
-                Files.createDirectories(parent);
-            } catch (IOException e) {
-                throw new IllegalStateException("Unable to create SQLite directory: " + parent, e);
-            }
-        }
-
-        return "jdbc:sqlite:" + databasePath.toAbsolutePath();
-    }
     private static final String OUTPUT_PATH = "report/crawl-report.html";
     private static final String START_MARKER = "/*CRAWL_DATA_START*/";
     private static final String END_MARKER = "/*CRAWL_DATA_END*/";
 
     public static void main(String[] args) throws Exception {
-        try (Connection conn = DriverManager.getConnection(DB_URL)) {
+        try (Connection conn = DatabaseManager.createConnection()) {
             String dataJson = buildDataJson(conn);
             writeReport(dataJson);
             System.out.println("Report written to " + OUTPUT_PATH);

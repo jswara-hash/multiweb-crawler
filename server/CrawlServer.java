@@ -51,7 +51,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class CrawlServer {
 
     private static final int PORT = resolvePort();
-    private static final String DB_URL = resolveDatabaseUrl();
     private static final String LANDING_PAGE_PATH = "index.html";
     private static final String DASHBOARD_PAGE_PATH = "report/live-report.html";
 
@@ -66,24 +65,6 @@ public class CrawlServer {
             }
         }
         return 8080;
-    }
-
-    private static String resolveDatabaseUrl() {
-        String configured = System.getenv("DB_PATH");
-        Path databasePath = (configured != null && !configured.trim().isEmpty())
-                ? Paths.get(configured)
-                : Paths.get("data", "crawler.db");
-
-        Path parent = databasePath.getParent();
-        if (parent != null) {
-            try {
-                Files.createDirectories(parent);
-            } catch (IOException e) {
-                throw new IllegalStateException("Unable to create SQLite directory: " + parent, e);
-            }
-        }
-
-        return "jdbc:sqlite:" + databasePath.toAbsolutePath();
     }
 
     private static final AtomicBoolean crawlInProgress = new AtomicBoolean(false);
@@ -144,7 +125,7 @@ public class CrawlServer {
     }
 
     private static void handleResults(HttpExchange exchange) throws IOException {
-        try (Connection conn = DriverManager.getConnection(DB_URL)) {
+        try (Connection conn = DatabaseManager.createConnection()) {
             String dataJson = JsonExporter.buildDataJson(conn);
             // Inject source/seedUrl metadata so the browser can label whose
             // results these actually are, instead of assuming it matches
@@ -269,7 +250,7 @@ public class CrawlServer {
             return;
         }
 
-        try (Connection conn = DriverManager.getConnection(DB_URL)) {
+        try (Connection conn = DatabaseManager.createConnection()) {
             String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm"));
             String filename = "crawler_report_" + timestamp + ".xlsx";
             Path exportDir = Paths.get("report");

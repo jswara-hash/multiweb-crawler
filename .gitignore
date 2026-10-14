@@ -29,6 +29,7 @@ report/*.xls
 # IDE/editor noise
 .vscode/
 .idea/
+*.code-workspace
 __pycache__/
 *.iml
 
